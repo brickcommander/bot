@@ -30,7 +30,7 @@ const User = require("./models/user");
 async function isUserExists(id) {
     try {
         let res = await client.db("telegram-bot").collection("users").findOne({id: id.toString()})
-        console.log("E", res, id);
+        console.log("isUserExists", res, id);
         if(res) return 1;
         else    return 0; 
     } catch (e) {
@@ -44,7 +44,7 @@ async function InsertUser(id, name, sch, sec) {
     try {
         let user = new User({"id": id, "name": name, "sch": sch, "sec": sec});
         let res = await client.db("telegram-bot").collection("users").insertOne(user);
-        console.log("I", res);
+        console.log("InsertUser", res);
     } catch (e) {
         console.error(e);
     }
@@ -53,7 +53,7 @@ async function InsertUser(id, name, sch, sec) {
 async function getUser(id) {
     try {
         let res = await client.db("telegram-bot").collection("users").findOne({id: id});
-        console.log("G", res);
+        console.log("GetUser", res);
     } catch (e) {
         console.error(e);
     }
@@ -62,7 +62,7 @@ async function getUser(id) {
 async function deleteUser(id) {
     try {
         let res = await client.db("telegram-bot").collection("users").deleteOne({id: id});
-        console.log("D", res);
+        console.log("DeleteUser", res);
     } catch (e) {
         console.error(e);
     }
@@ -164,34 +164,7 @@ app.listen(port,  () => {
 //     }
 // })
 
-const startWizard = new WizardScene(
-    "start",
-    async (ctx) => {
-        console.log("startWizard-first-method");
-        if(admin.includes(ctx.chat.id.toString())) {
-            await ctx.reply(`Welcome Boss`);
-            return ctx.scene.leave();
-        }
-        let res = await isUserExists(ctx.chat.id);
-        console.log("startWizard-notAdmin-isUserExists-Response:", res);
-        if(res == 1) {  // User Exists
-            await bot.telegram.sendMessage(ctx.chat.id, `Hi ${ctx.from.first_name}! Welcome back`);
-            return ctx.scene.leave();
-        } else if(res == -1) {
-            await ctx.reply(`Couldn't Verify. Try again later.`);
-            return ctx.scene.leave();
-        } else {
-            console.log("startWizard-second-method");
-            await bot.telegram.sendMessage(ctx.chat.id, `Hi ${ctx.from.first_name}! Welcome to my telegram bot`);
-            await bot.telegram.sendMessage(ctx.chat.id, `Enter your Scholar Number`);
-            bot.on('text', async (ctx2) => {
-                await InsertUser(ctx2.chat.id, ctx2.chat.first_name, ctx2.message.text, 2);
-                await ctx2.reply(`Logged-In`);
-                return ctx.scene.leave();
-            });
-        }
-    }
-);
+
 
 
 bot.command('command1', async (ctx) => {
@@ -309,6 +282,42 @@ const requestLocationKeyboard = {
 
 //method to start get the script to pulling updates for telegram 
 
+const startWizard = new WizardScene(
+    "start",
+    async (ctx) => {
+        console.log("startWizard-first-method");
+        if(admin.includes(ctx.chat.id.toString())) {
+            await ctx.reply(`Welcome Boss`);
+            return ctx.scene.leave();
+        }
+        let res = await isUserExists(ctx.chat.id);
+        console.log("startWizard-notAdmin-isUserExists-Response:", res);
+        if(res == 1) {  // User Exists
+            await bot.telegram.sendMessage(ctx.chat.id, `Hi ${ctx.from.first_name}! Welcome back`);
+            return ctx.scene.leave();
+        } else if(res == -1) {
+            await ctx.reply(`Couldn't Verify. Try again later.`);
+            return ctx.scene.leave();
+        } else {
+            console.log("startWizard-second-method");
+            await bot.telegram.sendMessage(ctx.chat.id, `Hi ${ctx.from.first_name}! Welcome to my telegram bot`);
+            await bot.telegram.sendMessage(ctx.chat.id, `Enter your Scholar Number`);
+            console.log("23");
+            return ctx.wizard.next();
+        }
+    },
+    async (ctx) => {
+        console.log("24");
+        await InsertUser(ctx.chat.id, ctx.chat.first_name, ctx.message.text, 2);
+        console.log("25");
+        await ctx.reply(`Logged-In`);
+        console.log("26");
+        ctx.scene.leave();
+        return ctx.scene.leave();
+    }
+);
+
+
 /* ********************************************************************* */
 
 const stage = new Stage([startWizard])
@@ -320,7 +329,6 @@ bot.use(stage.middleware())
 
 
 /* ************************     BOT - events      ********************** */
-
 
 
 bot.start(async (ctx) => {
