@@ -1,6 +1,10 @@
 const Telegraf = require('telegraf');
 const dotenv = require("dotenv");
 
+const WizardScene = require("telegraf/scenes/wizard");
+const Stage = require("telegraf/stage");
+const session = require("telegraf/session");
+
 dotenv.config({path: './config.env' });
 
 const TOKEN = process.env.TOKEN;
@@ -132,35 +136,64 @@ app.listen(port,  () => {
 /* ************************************ TELEGRAM INTERACTION ****************************************** */
 
 
-bot.command('start', async (ctx) => {
-    console.log("Start", ctx.from);
+// bot.command('start', async (ctx) => {
+//     console.log("Start", ctx.from);
 
-    if(admin.includes(ctx.chat.id.toString())) {
-        await ctx.reply(`Welcome`);
-        // await handleAdminStart(ctx);
-    } else {
-        // Queries, if user exists or not
+//     if(admin.includes(ctx.chat.id.toString())) {
+//         await ctx.reply(`Welcome`);
+//         // await handleAdminStart(ctx);
+//     } else {
+//         // Queries, if user exists or not
+//         let res = await isUserExists(ctx.chat.id);
+//         console.log("C", res);
+
+//         if(res == 0) {  // User Does Not Exist
+//             bot.telegram.sendMessage(ctx.chat.id, `Hi ${ctx.from.first_name}! Welcome to my telegram bot`);
+//             bot.telegram.sendMessage(ctx.chat.id, `Enter your Scholar Number`);
+//             bot.on('text', async (ctx) => {
+//                 await InsertUser(ctx.chat.id, ctx.chat.first_name, ctx.message.text, 2);
+//                 await ctx.reply(`Logged-In`);
+//             })
+//         } else if(res == -1) {
+//             await ctx.reply(`Couldn't Verify. Try again later.`);
+//         } else {
+//             bot.telegram.sendMessage(ctx.chat.id, `Hi ${ctx.from.first_name}! Welcome back`);
+//         }
+//     }
+// })
+
+const startWizard = new WizardScene(
+    "start",
+    async (ctx) => {
+        console.log("startWizard first method");
+        if(admin.includes(ctx.chat.id.toString())) {
+            await ctx.reply(`Welcome Boss`);
+            return ctx.scene.leave();
+        }
         let res = await isUserExists(ctx.chat.id);
-        console.log("C", res);
-
-        if(res == 0) {  // User Does Not Exist
-            bot.telegram.sendMessage(ctx.chat.id, `Hi ${ctx.from.first_name}! Welcome to my telegram bot`);
-            bot.telegram.sendMessage(ctx.chat.id, `Enter your Scholar Number`);
-            bot.on('text', async (ctx) => {
-                await InsertUser(ctx.chat.id, ctx.chat.first_name, ctx.message.text, 2);
-                await ctx.reply(`Logged-In`);
-            });
+        console.log("startWizard, notAdmin, isUserExists Response: ", res);
+        if(res == 1) {  // User Exists
+            await bot.telegram.sendMessage(ctx.chat.id, `Hi ${ctx.from.first_name}! Welcome back`);
+            return ctx.scene.leave();
         } else if(res == -1) {
             await ctx.reply(`Couldn't Verify. Try again later.`);
+            return ctx.scene.leave();
         } else {
-            bot.telegram.sendMessage(ctx.chat.id, `Hi ${ctx.from.first_name}! Welcome back`);
+            return ctx.wizard.next();
         }
+    },
+    async (ctx) => {
+        console.log("startWizard second method");
+        await bot.telegram.sendMessage(ctx.chat.id, `Hi ${ctx.from.first_name}! Welcome to my telegram bot`);
+        await bot.telegram.sendMessage(ctx.chat.id, `Enter your Scholar Number`);
+        bot.on('text', async (ctx) => {
+            await InsertUser(ctx.chat.id, ctx.chat.first_name, ctx.message.text, 2);
+            await ctx.reply(`Logged-In`);
+        })
+        return ctx.scene.leave();
     }
-})
+);
 
-bot.on('text', async (ctx) => {
-    await ctx.reply(`You wrote: `, ctx.message.text);
-});
 
 bot.command('command1', async (ctx) => {
     console.log("request admin access", ctx.from);
@@ -276,6 +309,20 @@ const requestLocationKeyboard = {
 /* ************************************ TELEGRAM INTERACTION - END ****************************************** */
 
 //method to start get the script to pulling updates for telegram 
+
+/* ********************************************************************* */
+
+const stage = new Stage([startWizard]);
+bot.use(stage.middleware());
+
+
+/* ************************     BOT - events      ********************** */
+
+bot.start(async (ctx) => {
+    console.log("start");
+    ctx.scene.enter("start");
+});
+
 bot.launch();
 
 
