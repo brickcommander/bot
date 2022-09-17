@@ -13,6 +13,8 @@ const GOD = process.env.ADMIN; // ADMIN
 
 const admin = [GOD];
 
+bot.use(session());
+
 /* ************************************ CONNECTION TO DATABASE - START ****************************************** */
 
 const express = require("express");
@@ -165,13 +167,13 @@ app.listen(port,  () => {
 const startWizard = new WizardScene(
     "start",
     async (ctx) => {
-        console.log("startWizard first method");
+        console.log("startWizard-first-method");
         if(admin.includes(ctx.chat.id.toString())) {
             await ctx.reply(`Welcome Boss`);
             return ctx.scene.leave();
         }
         let res = await isUserExists(ctx.chat.id);
-        console.log("startWizard, notAdmin, isUserExists Response: ", res);
+        console.log("startWizard-notAdmin-isUserExists-Response:", res);
         if(res == 1) {  // User Exists
             await bot.telegram.sendMessage(ctx.chat.id, `Hi ${ctx.from.first_name}! Welcome back`);
             return ctx.scene.leave();
@@ -179,18 +181,15 @@ const startWizard = new WizardScene(
             await ctx.reply(`Couldn't Verify. Try again later.`);
             return ctx.scene.leave();
         } else {
-            return ctx.wizard.next();
+            console.log("startWizard-second-method");
+            await bot.telegram.sendMessage(ctx.chat.id, `Hi ${ctx.from.first_name}! Welcome to my telegram bot`);
+            await bot.telegram.sendMessage(ctx.chat.id, `Enter your Scholar Number`);
+            bot.on('text', async (ctx2) => {
+                await InsertUser(ctx2.chat.id, ctx2.chat.first_name, ctx2.message.text, 2);
+                await ctx2.reply(`Logged-In`);
+                return ctx.scene.leave();
+            });
         }
-    },
-    async (ctx) => {
-        console.log("startWizard second method");
-        await bot.telegram.sendMessage(ctx.chat.id, `Hi ${ctx.from.first_name}! Welcome to my telegram bot`);
-        await bot.telegram.sendMessage(ctx.chat.id, `Enter your Scholar Number`);
-        bot.on('text', async (ctx) => {
-            await InsertUser(ctx.chat.id, ctx.chat.first_name, ctx.message.text, 2);
-            await ctx.reply(`Logged-In`);
-        })
-        return ctx.scene.leave();
     }
 );
 
@@ -312,20 +311,25 @@ const requestLocationKeyboard = {
 
 /* ********************************************************************* */
 
-const stage = new Stage([startWizard]);
-bot.use(stage.middleware());
+const stage = new Stage([startWizard])
+stage.command('cancel', (ctx) => {
+    ctx.reply("Operation canceled")
+    return ctx.scene.leave()
+})
+bot.use(stage.middleware())
 
 
 /* ************************     BOT - events      ********************** */
 
+
+
 bot.start(async (ctx) => {
-    console.log("start");
+    console.log("start-command")
     ctx.scene.enter("start");
-});
-
-bot.launch();
+})
 
 
+bot.launch()
 
 
 
