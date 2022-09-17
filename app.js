@@ -138,33 +138,6 @@ app.listen(port,  () => {
 /* ************************************ TELEGRAM INTERACTION ****************************************** */
 
 
-bot.command('command1', async (ctx) => {
-    console.log("request admin access", ctx.from);
-
-    if(admin.includes(ctx.chat.id.toString())) {
-        await ctx.reply(`You Are an Admin`);
-    } else {
-            let name = "no_name";
-            let scholar_no = "xxxxxxxxx";
-            await bot.telegram.sendMessage(ctx.chat.id, `Enter Your Name`);
-            await bot.on('text', async (ctx, next) => {
-                console.log(ctx.message.txt);
-            })
-
-            await bot.telegram.sendMessage(ctx.chat.id, `Your Scholar Number`);
-            await bot.on('text', async (ctx, next) => {
-                scholar_no = ctx.message.text;
-            })
-            await bot.telegram.sendMessage(GOD, `Boss, ${name} -> ${scholar_no} requesting Admin Access`);
-
-    
-            // bot.telegram.sendMessage(ctx.chat.id, `Enter your Scholar Number`);
-            // await InsertUser(ctx.chat.id, ctx.chat.first_name, ctx.message.text, 2);
-            // await ctx.reply(`Logged-In`);
-    }
-})
-
-
 //method that displays the inline keyboard buttons 
 bot.hears('animals', ctx => {
     console.log(ctx.from)
@@ -285,11 +258,30 @@ const startWizard = new WizardScene (
 );
 
 const askforAdminAccess = new WizardScene (
-    "askAdminforAdminAccess",
+    "askforAdminAccess",
     async (ctx) => {
-
+        ctx.wizard.state.name = "noName";
+        ctx.wizard.state.scholarNo = "xxxxxxxxx";
+        console.log("request admin access", ctx.from);
+        if(admin.includes(ctx.chat.id.toString())) {
+            await ctx.reply(`You already have Admin Access`);
+            return ctx.scene.leave();
+        }
+        await bot.telegram.sendMessage(ctx.chat.id, `Enter Your Name`);
+        return ctx.wizard.next();
+    },
+    async (ctx) => {
+        ctx.wizard.state.name = ctx.message.text;
+        await bot.telegram.sendMessage(ctx.chat.id, `Your Scholar Number`);
+        ctx.wizard.next();
+    },
+    async (ctx) => {
+        ctx.wizard.state.scholarNo = ctx.message.text;
+        await bot.telegram.sendMessage(GOD, `Boss, ${ctx.wizard.state.name} -> ${ctx.wizard.state.scholarNo} requesting Admin Access`);
+        ctx.scene.leave();
     }
-)
+);
+
 
 
 /* ********************************************************************* */
@@ -312,7 +304,7 @@ bot.start(async (ctx) => {
 
 bot.command("command1", async (ctx) => {
     console.log("command1-AskforAdminAccess")
-    ctx.scene.enter("askAdminforAdminAccess");
+    ctx.scene.enter("askforAdminAccess");
 })
 
 
@@ -337,5 +329,5 @@ bot.launch()
 
 
 
-            // Explicit usage
-            // await ctx.telegram.sendMessage(ctx.message.chat.id, `Hello ${ctx.state.role}`);
+// Explicit usage
+// await ctx.telegram.sendMessage(ctx.message.chat.id, `Hello ${ctx.state.role}`);
