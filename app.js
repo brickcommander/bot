@@ -138,35 +138,6 @@ app.listen(port,  () => {
 /* ************************************ TELEGRAM INTERACTION ****************************************** */
 
 
-// bot.command('start', async (ctx) => {
-//     console.log("Start", ctx.from);
-
-//     if(admin.includes(ctx.chat.id.toString())) {
-//         await ctx.reply(`Welcome`);
-//         // await handleAdminStart(ctx);
-//     } else {
-//         // Queries, if user exists or not
-//         let res = await isUserExists(ctx.chat.id);
-//         console.log("C", res);
-
-//         if(res == 0) {  // User Does Not Exist
-//             bot.telegram.sendMessage(ctx.chat.id, `Hi ${ctx.from.first_name}! Welcome to my telegram bot`);
-//             bot.telegram.sendMessage(ctx.chat.id, `Enter your Scholar Number`);
-//             bot.on('text', async (ctx) => {
-//                 await InsertUser(ctx.chat.id, ctx.chat.first_name, ctx.message.text, 2);
-//                 await ctx.reply(`Logged-In`);
-//             })
-//         } else if(res == -1) {
-//             await ctx.reply(`Couldn't Verify. Try again later.`);
-//         } else {
-//             bot.telegram.sendMessage(ctx.chat.id, `Hi ${ctx.from.first_name}! Welcome back`);
-//         }
-//     }
-// })
-
-
-
-
 bot.command('command1', async (ctx) => {
     console.log("request admin access", ctx.from);
 
@@ -282,7 +253,7 @@ const requestLocationKeyboard = {
 
 //method to start get the script to pulling updates for telegram 
 
-const startWizard = new WizardScene(
+const startWizard = new WizardScene (
     "start",
     async (ctx) => {
         console.log("startWizard-first-method");
@@ -302,25 +273,28 @@ const startWizard = new WizardScene(
             console.log("startWizard-second-method");
             await bot.telegram.sendMessage(ctx.chat.id, `Hi ${ctx.from.first_name}! Welcome to my telegram bot`);
             await bot.telegram.sendMessage(ctx.chat.id, `Enter your Scholar Number`);
-            console.log("23");
             return ctx.wizard.next();
         }
     },
     async (ctx) => {
-        console.log("24");
         await InsertUser(ctx.chat.id, ctx.chat.first_name, ctx.message.text, 2);
-        console.log("25");
         await ctx.reply(`Logged-In`);
-        console.log("26");
         ctx.scene.leave();
         return ctx.scene.leave();
     }
 );
 
+const askforAdminAccess = new WizardScene (
+    "askAdminforAdminAccess",
+    async (ctx) => {
+
+    }
+)
+
 
 /* ********************************************************************* */
 
-const stage = new Stage([startWizard])
+const stage = new Stage([startWizard, askforAdminAccess])
 stage.command('cancel', (ctx) => {
     ctx.reply("Operation canceled")
     return ctx.scene.leave()
@@ -333,7 +307,12 @@ bot.use(stage.middleware())
 
 bot.start(async (ctx) => {
     console.log("start-command")
-    ctx.scene.enter("start");
+    ctx.scene.enter("start")
+})
+
+bot.command("command1", async (ctx) => {
+    console.log("command1-AskforAdminAccess")
+    ctx.scene.enter("askAdminforAdminAccess");
 })
 
 
