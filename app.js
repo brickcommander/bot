@@ -267,26 +267,39 @@ const askforAdminAccess = new WizardScene (
             await ctx.reply(`You already have Admin Access`);
             return ctx.scene.leave();
         }
-        await bot.telegram.sendMessage(ctx.chat.id, `Enter Your Name`);
+        await ctx.reply(`Enter Your Name`);
         return ctx.wizard.next();
     },
     async (ctx) => {
         ctx.wizard.state.name = ctx.message.text;
-        await bot.telegram.sendMessage(ctx.chat.id, `Your Scholar Number`);
+        await ctx.reply(`Your Scholar Number`);
         ctx.wizard.next();
     },
     async (ctx) => {
         ctx.wizard.state.scholarNo = ctx.message.text;
-        await bot.telegram.sendMessage(GOD, `Boss, ${ctx.wizard.state.name} -> ${ctx.wizard.state.scholarNo} requesting Admin Access`);
+        ctx.wizard.state.prevChatId = ctx.chat.id;
+        await bot.telegram.sendMessage(GOD, `Admin Request\nName: ${ctx.wizard.state.name}\nScholar: ${ctx.wizard.state.scholarNo}\nChatId: ${ctx.chat.id}`);
+        await ctx.reply("Your Request for Admin Access has been registered, and will be resolved soon. Thanks for your interest.");
         ctx.scene.leave();
     }
 );
 
-
+const makeAdmin = new WizardScene (
+    "makeAdmin",
+    async (ctx) => {
+        ctx.reply("Who?");
+        ctx.wizard.next();
+    },
+    async (ctx) => {
+        InsertAdmin(ctx.message.text);
+        await bot.telegram.sendMessage(ctx.message.text, `You have been granted Admin Access.\nI'm sure you will make a great use of it.`);
+        ctx.scene.leave();
+    }
+)
 
 /* ********************************************************************* */
 
-const stage = new Stage([startWizard, askforAdminAccess])
+const stage = new Stage([startWizard, askforAdminAccess, makeAdmin])
 stage.command('cancel', (ctx) => {
     ctx.reply("Operation canceled")
     return ctx.scene.leave()
@@ -294,7 +307,7 @@ stage.command('cancel', (ctx) => {
 bot.use(stage.middleware())
 
 
-/* ************************     BOT - events      ********************** */
+/* ************************     BOT - commands      ********************** */
 
 
 bot.start(async (ctx) => {
@@ -305,6 +318,26 @@ bot.start(async (ctx) => {
 bot.command("command1", async (ctx) => {
     console.log("command1-AskforAdminAccess")
     ctx.scene.enter("askforAdminAccess");
+})
+
+/* ***********************    BOT - actions        *********************** */
+
+// bot.action('YesAdminAccess', async (ctx) => {
+//     console.log("YesAdminAccess");
+//     await bot.telegram.sendMessage(, "Access Granted");
+// })
+// bot.action('NoAdminAccess', async (ctx) => {
+//     console.log("NoAdminAccess");
+//     await bot.telegram.sendMessage(ctx.wizard.state.prevChatId, "Request Delined");
+// })
+
+/* *************************** ADMIN - commands     *************************** */
+bot.command("makeAdmin", async (ctx) => {
+    if(ctx.chat.id != GOD) {
+        await ctx.reply("You Don't have this privilege.\nHave a good day.");
+    } else {
+        ctx.scene.enter("makeAdmin");
+    }
 })
 
 
