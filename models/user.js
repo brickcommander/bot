@@ -17,10 +17,6 @@ const userSchema = new Schema ({
     sec: {
         type: String,
         required: true 
-    },
-    isAdmin: {
-        type: Boolean,
-        required: true
     }
 });
 
