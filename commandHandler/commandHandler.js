@@ -2,7 +2,7 @@ const WizardScene = require("telegraf/scenes/wizard");
 const Stage = require("telegraf/stage");
 const session = require("telegraf/session");
 
-var {admin, isUserExists, getUser, deleteUser, InsertAdmin, getAllAdmins, isAMember} = require("./Database/mongo");
+var {admin, isUserExists, getUser, deleteUser, InsertAdmin, getAllAdmins, isAMember} = require("../Database/mongo");
 
 const startWizard = new WizardScene (
     "start",

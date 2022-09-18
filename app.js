@@ -13,7 +13,7 @@ const ADMIN = process.env.ADMIN; // ADMIN
 
 const {admin, isUserExists, getUser, deleteUser, InsertAdmin, getAllAdmins, isAMember} = require("./Database/mongo");
 
-const {stage, startWizard, askforAdminAccess, makeAdmin} = require("./commands");
+const {stage, startWizard, askforAdminAccess, makeAdmin} = require("./commandHandler/commandHandler");
 
 bot.use(session());
 
