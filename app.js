@@ -137,25 +137,3 @@ const requestLocationKeyboard = {
         ]
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Explicit usage
-// await ctx.telegram.sendMessage(ctx.message.chat.id, `Hello ${ctx.state.role}`);
