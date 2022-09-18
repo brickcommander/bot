@@ -102,6 +102,15 @@ bot.command("command2", async (ctx) => {
     }
 })
 
+bot.command("askForPooling", async (ctx) => {
+    console.log("command3-askForPooling")
+    let res = await isAMember(ctx.chat.id.toString());
+    if(res == 0) {
+        ctx.reply("Login with /start command first");
+        return;
+    }
+})
+
 
 bot.launch()
 

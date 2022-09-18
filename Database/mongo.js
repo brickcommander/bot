@@ -12,9 +12,9 @@ const client = new MongoClient(DB);
 
 const User = require("../models/user");
 
-const GOD = process.env.ADMIN; // ADMIN
+const ADMIN = process.env.ADMIN; // ADMIN
 
-const admin = [GOD];
+const admin = [];
 
 async function isUserExists(id) {
     try {
