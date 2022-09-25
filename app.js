@@ -501,19 +501,5 @@ bot.command("command4", async (ctx) => {
     await ctx.scene.enter("downloadNotes")
 })
 
-/* ***********************    BOT - actions        *********************** */
-
-// bot.action('YesAdminAccess', async (ctx) => {
-//     console.log("YesAdminAccess");
-//     await bot.telegram.sendMessage(, "Access Granted");
-// })
-// bot.action('NoAdminAccess', async (ctx) => {
-//     console.log("NoAdminAccess");
-//     await bot.telegram.sendMessage(ctx.wizard.state.prevChatId, "Request Delined");
-// })
-
-/* *************************** ADMIN - commands     *************************** */
-
-
 
 bot.launch()
