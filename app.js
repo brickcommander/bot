@@ -15,10 +15,11 @@ const ADMIN = process.env.ADMIN // ADMIN
 
 const admin = [ADMIN]
 const subjects = ["Web Search and Mining", "TCP/IP", "Ethical Hacking", "Mobile Computing", "Network Security", "Distributed Computing"]
+const offers = ["6M", "FTE", "6M+FTE"]
 
 bot.use(session())
 
-/* ************************************ CONNECTION TO DATABASE - START ****************************************** */
+/* ************************************ DATABASE QUERIES - START ****************************************** */
 
 const express = require("express");
 const { MongoClient, ConnectionCheckOutFailedEvent } = require('mongodb');
@@ -30,6 +31,7 @@ const client = new MongoClient(DB);
 
 const User = require("./models/user")
 const notes2 = require("./models/notes")
+const placement = require("./models/placementData")
 
 async function isUserExists(id) {
     try {
@@ -156,6 +158,29 @@ async function getAttendancePercentage(id) {
     }
 }
 
+async function UpdatePlacementData(obj, id) {
+    try {
+        let res = await client.db("telegram-bot").collection("placementRecord").updateOne({"id": id.toString()}, {$set: obj}, {upsert: true})
+        if(res) return 0
+        else    return 1
+    } catch(e) {
+        console.error(e)
+        return -1
+    }
+}
+
+async function FindAllPlacementRecord(filterObj) {
+    try {
+        let res = await client.db("telegram-bot").collection("placementRecord").find(filterObj)
+        res = await res.toArray()
+        console.log("FindAllPlacementRecord", res.length)
+        return res.length
+    } catch (e) {
+        console.error(e)
+        return 0
+    }
+}
+
 async function errorLog(m) {
     await client.db("telegram-bot").collection("error-logs").insertOne({message: m})
 }
@@ -186,142 +211,98 @@ app.listen(port,  () => {
     console.log(`Server started on port ${port}`)
 })
 
-
-/* ************************************ CONNECTION TO DATABASE - END ****************************************** */
+/* ************************************ DATABASE QUERIES - END ****************************************** */
 
 /* ************************************ Utility Functions ****************************************** */
 
 
-/* ************************************ TELEGRAM COMMANDS ****************************************** */
+/* ************************************ MARKUPS ****************************************** */
 
+const requestSubjectName = (ctx, message) => {
+    bot.telegram.sendMessage(ctx.chat.id, message, {
+        reply_markup: {
+            inline_keyboard: [
+                [   
+                    {
+                        text: subjects[0],
+                        one_time_keyboard: true,
+                        callback_data: 0
+                    },
+                    {
+                        text: subjects[1],
+                        one_time_keyboard: true,
+                        callback_data: 1
+                    },
+                    {
+                        text: subjects[2],
+                        one_time_keyboard: true,
+                        callback_data: 2
+                    },
+                    {
+                        text: subjects[3],
+                        one_time_keyboard: true,
+                        callback_data: 3
+                    },
+                    {
+                        text: subjects[4],
+                        one_time_keyboard: true,
+                        callback_data: 4
+                    },
+                    {
+                        text: subjects[5],
+                        one_time_keyboard: true,
+                        callback_data: 5
+                    },
 
-//method that displays the inline keyboard buttons 
-bot.hears('animals', ctx => {
-    console.log(ctx.from)
-    let animalMessage = `great, here are pictures of animals you would love`
-    ctx.deleteMessage();
-    bot.telegram.sendMessage(ctx.chat.id, animalMessage, {
+                ],
+            ]
+        }
+    })
+}
+
+const requestYesNo = (ctx, message) => {
+    bot.telegram.sendMessage(ctx.chat.id, message, {
         reply_markup: {
             inline_keyboard: [
                 [   {
-                        text: "dog",
-                        callback_data: 'dog'
+                        text: "Yes",
+                        one_time_keyboard: true,
+                        callback_data: 1
                     },
                     {
-                        text: "cat",
-                        callback_data: 'cat'
+                        text: "No",
+                        one_time_keyboard: true,
+                        callback_data: 0
                     }
                 ],
             ]
         }
     })
-})
-
-//method that returns image of a dog
-bot.action('dog', ctx => {
-    bot.telegram.sendPhoto(ctx.chat.id, {
-        source: "res/dog.jpg"
-    })
-})
-
-//method that returns image of a cat 
-bot.action('cat', ctx => {
-    bot.telegram.sendPhoto(ctx.chat.id, {
-        source: "res/cat.png"
-    })
-})
-
-//method for requesting user's phone number
-bot.hears('phone', (ctx, next) => {
-    console.log(ctx.from)
-    bot.telegram.sendMessage(ctx.chat.id, 'Can we get access to your phone number?', requestPhoneKeyboard)
-
-})
-
-//method for requesting user's location
-bot.hears("location", (ctx) => {
-    console.log(ctx.from)
-    bot.telegram.sendMessage(ctx.chat.id, 'Can we access your location?', requestLocationKeyboard)
-})
-
-bot.command("images", (ctx) => {
-    console.log("Images")
-    console.log(ctx)
-})
-
-bot.on('photo', (ctx) => {
-    console.log("mediagroup")
-    console.log(ctx.message.photo)
-})
-
-//constructor for providing phone number to the bot
-const requestPhoneKeyboard = {
-    "reply_markup": {
-        "one_time_keyboard": true,
-        "keyboard": [
-            [{
-                text: "My phone number",
-                request_contact: true,
-                one_time_keyboard: true
-            }],
-            ["Cancel"]
-        ]
-    }
 }
 
-//constructor for proving location to the bot
-const requestLocationKeyboard = {
-    "reply_markup": {
-        "one_time_keyboard": true,
-        "keyboard": [
-            [{
-                text: "My location",
-                request_location: true,
-                one_time_keyboard: true
-            }],
-            ["Cancel"]
-        ]
-    }
-}
-
-const requestSubjectName = {
-    "reply_markup": {
-        "one_time_keyboard": true,
-        "keyboard": [
-            [{
-                text: "Web Search and Mining",
-                one_time_keyboard: true
-            }],
-            [{
-                text: "TCP/IP",
-                one_time_keyboard: true
-            }],
-            [{
-                text: "Ethical Hacking",
-                one_time_keyboard: true
-            }],
-            // [{
-            //     text: "Cloud Computing",
-            //     one_time_keyboard: true
-            // }],
-            [{
-                text: "Mobile Computing",
-                one_time_keyboard: true
-            }],
-            [{
-                text: "Network Security",
-                one_time_keyboard: true
-            }],
-            [{
-                text: "Distributed Computing",
-                one_time_keyboard: true
-            }],
-            [{
-                text: "Cancel",
-                one_time_keyboard: true
-            }],
-        ]
-    }
+const requestOfferType = (ctx, message) => {
+    bot.telegram.sendMessage(ctx.chat.id, message, {
+        reply_markup: {
+            inline_keyboard: [
+                [   {
+                        text: offers[0],
+                        one_time_keyboard: true,
+                        callback_data: 0
+                    },
+                    {
+                        text: offers[1],
+                        one_time_keyboard: true,
+                        callback_data: 1
+                    },
+                    {
+                        text: offers[2],
+                        one_time_keyboard: true,
+                        callback_data: 2
+                    }
+                ],
+            ]
+        }
+    })
 }
 
 
@@ -402,7 +383,8 @@ const uploadNotes = new WizardScene (
         ctx.wizard.next()
     },
     async (ctx) => {
-        if(ctx.message.text == "Cancel") return ctx.scene.leave()
+        ctx.deleteMessage()
+        let res = 
         ctx.wizard.state.subject = ctx.message.text
         bot.telegram.sendMessage(ctx.chat.id, 'Topic Name ?',
             {"reply_to_message_id": ctx.message.message_id}
@@ -432,19 +414,17 @@ const uploadNotes = new WizardScene (
 const downloadNotes = new WizardScene (
     "downloadNotes",
     async (ctx) => {
-        bot.telegram.sendMessage(ctx.chat.id, 'Subject', requestSubjectName)
+        requestSubjectName(ctx, "Choose Subject")
         ctx.wizard.next()
     },
     async (ctx) => {
-        if(ctx.message.text == "Cancel") return ctx.scene.leave()
-        ctx.wizard.state.subject = ctx.message.text
-        bot.telegram.sendMessage(ctx.chat.id, 'Topic Name',
-            {"reply_to_message_id": ctx.message.message_id}
-        )
+        let res = subjects[ctx.update.callback_query.data]
+        ctx.wizard.state.subject = res
+        bot.telegram.sendMessage(ctx.chat.id, 'Topic Name')
         ctx.wizard.next()
     },
     async (ctx) => {
-        ctx.wizard.state.topic_name = ctx.message.text
+        ctx.wizard.state.topic_name = res
         console.log(ctx.wizard.state)
         let res = await DownloadNotes(ctx.wizard.state.subject, ctx.wizard.state.topic_name)
         if(res == 0) {
@@ -465,16 +445,16 @@ const downloadNotes = new WizardScene (
 const updateAttendance = new WizardScene(
     "updateAttendance",
     async (ctx) => {
-        bot.telegram.sendMessage(ctx.chat.id, 'Subject', requestSubjectName)
+        requestSubjectName(ctx, "Choose Subject")
         ctx.wizard.next()
     },
     async (ctx) => {
-        if(ctx.message.text == "Cancel") return ctx.scene.leave()
-        let res = await UpdateAttendanceinDB(ctx.chat.id, ctx.message.text)
+        let res = subjects[ctx.update.callback_query.data]
+        res = await UpdateAttendanceinDB(ctx.chat.id, res)
         if(res == 0) ctx.reply("Updated Successfully")
         else ctx.reply("Couldn't Update")
         if(res == -1) {
-            errorLog(`While Updating Attendance\nid: ${ctx.chat.id}\n${ctx.message.text}`)
+            errorLog(`While Updating Attendance\nid: ${ctx.chat.id}\n${res}`)
         }
         ctx.scene.leave()
     }
@@ -494,15 +474,113 @@ const attendancePercengate = new WizardScene(
             }
         }
         console.log(messageA, messageShortage)
-        ctx.reply(messageA)
-        ctx.reply("\nShortage:" + messageShortage)
+        if(messageA) ctx.reply(messageA)
+        if(messageShortage) ctx.reply("\nShortage:" + messageShortage)
+        ctx.scene.leave()
+    }
+)
+
+const updatePlacementData = new WizardScene(
+    "updatePlacementData",
+    async (ctx) => {
+        ctx.reply("Company")
+        ctx.wizard.next()
+    },
+    async (ctx) => {
+        ctx.wizard.state.company = ctx.message.text
+        ctx.reply("CTC in LPA")
+        ctx.wizard.next()
+    },
+    async (ctx) => {
+        ctx.wizard.state.CTC = ctx.message.text
+        requestOfferType(ctx, "Offer Type?")
+        ctx.wizard.next()
+    },
+    async (ctx) => {
+        let res = ctx.update.callback_query.data
+        ctx.wizard.state.offerType = offers[res]
+        res = await UpdatePlacementData(ctx.wizard.state, res)
+        ctx.deleteMessage()
+        if(res == 0)    ctx.reply("Updated Successfully")
+        else {
+            if(res == -1)   errorLog(`Update Placement Record ${obj}`)
+            else            ctx.reply("Couldn't Update")
+        }
+        ctx.scene.leave()
+    }
+)
+
+const findAllPlacementRecordWithFilter = new WizardScene(
+    "findAllPlacementRecordWithFilter",
+    async (ctx) => {
+        console.log(Date)
+        requestYesNo(ctx, "Apply Cap on CTC?")
+        ctx.wizard.next()
+    },
+    async (ctx) => {
+        let res = ctx.update.callback_query.data
+        ctx.wizard.state.CTCFilter = res
+        ctx.deleteMessage()
+        if(res == '1') {
+            ctx.reply("CTC in LPA")
+        } else {
+            requestYesNo(ctx, "Filter by Type of Offer ?")
+        }
+        ctx.wizard.next()
+    },
+    async (ctx) => {
+        console.log(ctx.wizard.state)
+        if(ctx.wizard.state.CTCFilter == '1') {
+            console.log("44")
+            let res = ctx.message.text
+            ctx.wizard.state.CTC = res
+            requestYesNo(ctx, "Filter by Type of Offer ?")
+        } else {
+            let res = ctx.update.callback_query.data
+            if(res == '1') {
+                ctx.deleteMessage()
+                ctx.wizard.state.offerTypeFilter = res
+                requestOfferType(ctx, "Choose Type")
+            } else {
+                ctx.deleteMessage()
+                let res = await FindAllPlacementRecord({})
+                ctx.reply(res)
+                ctx.scene.leave()
+            }
+        }
+        ctx.wizard.next()
+    },
+    async (ctx) => {
+        let res = ctx.update.callback_query.data
+        if(ctx.wizard.state.CTCFilter == '1') {
+            ctx.deleteMessage()
+            ctx.wizard.state.offerTypeFilter = res
+            if(res == '1') requestOfferType(ctx, "Choose Type")
+            else {
+                let res = await FindAllPlacementRecord({"CTC": ctx.wizard.state.CTC})
+                ctx.reply(res)
+                ctx.scene.leave()
+            }
+        } else {
+            ctx.deleteMessage()
+            res = await FindAllPlacementRecord({"offerType": offers[res]})
+            ctx.reply(res)
+            ctx.scene.leave()
+        }
+        ctx.wizard.next()
+    },
+    async (ctx) => {
+        ctx.deleteMessage()
+        let res = ctx.update.callback_query.data
+        res = await FindAllPlacementRecord({"offerType": offers[res], "CTC": ctx.wizard.state.CTC})
+        ctx.reply(res)
         ctx.scene.leave()
     }
 )
 
 /* ********************************************************************* */
 
-const stage = new Stage([startWizard, askforAdminAccess, makeAdmin, uploadNotes, downloadNotes, updateAttendance, attendancePercengate])
+const stage = new Stage([startWizard, askforAdminAccess, makeAdmin, uploadNotes, downloadNotes, updateAttendance, attendancePercengate, updatePlacementData, findAllPlacementRecordWithFilter])
 stage.command('cancel', (ctx) => {
     ctx.reply("Operation canceled")
     return ctx.scene.leave()
@@ -560,6 +638,26 @@ bot.command("command6", async (ctx) => {
     if(await checkForUser(ctx.chat.id)) return
     await ctx.scene.enter("attendancePercengate")
 })
+
+bot.command("command7", async (ctx) => {
+    if(await checkForUser(ctx.chat.id)) return
+    await ctx.scene.enter("updatePlacementData")
+})
+
+bot.command("command8", async (ctx) => {
+    if(await checkForUser(ctx.chat.id)) return
+    if(admin.includes(ctx.chat.id.toString())) {
+        await ctx.scene.enter("findAllPlacementRecordWithFilter")
+    } else {
+        await ctx.reply("You Don't have this privilege.\nHave a good day.")
+    }
+})
+
+// bot.command("command9", async (ctx) => {
+//     ctx.deleteMessage()
+//     if(await checkForUser(ctx.chat.id)) return
+//     await ctx.scene.enter("findAllPlacementRecordWithFilter")
+// })
 
 
 bot.launch()

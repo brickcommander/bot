@@ -1,6 +1,6 @@
-const { Int32 } = require('mongodb');
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+const { Int32 } = require('mongodb')
+const mongoose = require('mongoose')
+const Schema = mongoose.Schema
 
 const userSchema = new Schema ({
     id: {
@@ -47,7 +47,7 @@ const userSchema = new Schema ({
         type: Number,
         required: true
     },
-});
+})
 
-const User = mongoose.model('User', userSchema);
-module.exports = User;
+const User = mongoose.model('User', userSchema)
+module.exports = User
