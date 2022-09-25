@@ -19,14 +19,34 @@ const userSchema = new Schema ({
         type: String,
         required: true
     },
-    // attendance_0: {
-    //     type: Int32,
+    "Web Search and Mining": {
+        type: Number,
+        required: true
+    },
+    "TCP/IP": {
+        type: Number,
+        required: true
+    },
+    // "Cloud Computing": {
+    //     type: Number,
     //     required: true
-    // }
-    // attendance_1: {
-    //     type: Int32,
-    //     required: true
-    // }
+    // },
+    "Ethical Hacking": {
+        type: Number,
+        required: true
+    },
+    "Mobile Computing": {
+        type: Number,
+        required: true
+    },
+    "Network Security": {
+        type: Number,
+        required: true
+    },
+    "Distributed Computing": {
+        type: Number,
+        required: true
+    },
 });
 
 const User = mongoose.model('User', userSchema);

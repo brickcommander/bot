@@ -14,6 +14,8 @@ const bot = new Telegraf(TOKEN)
 const ADMIN = process.env.ADMIN // ADMIN
 
 const admin = [ADMIN]
+const subjects = ["Web Search and Mining", "TCP/IP", "Ethical Hacking", "Mobile Computing", "Network Security", "Distributed Computing"]
+
 bot.use(session())
 
 /* ************************************ CONNECTION TO DATABASE - START ****************************************** */
@@ -43,7 +45,7 @@ async function isUserExists(id) {
 
 async function InsertUser(id, name, sch, sec) {
     try {
-        let user = new User({"id": id, "name": name, "sch": sch, "sec": sec})
+        let user = new User({"id": id, "name": name, "sch": sch, "sec": sec, [subjects[0]]: 0, [subjects[1]]: 0, [subjects[2]]: 0, [subjects[3]]: 0, [subjects[4]]: 0, [subjects[5]]: 0})
         let res = await client.db("telegram-bot").collection("users").insertOne(user)
         console.log("InsertUser", res)
     } catch (e) {
@@ -121,8 +123,51 @@ async function DownloadNotes(sub_name, topic) {
     }
 }
 
+async function UpdateAttendanceinDB(id, subject) {
+    try {
+        let res = await client.db("telegram-bot").collection("users").updateOne({"id": id.toString()}, {$inc: {[subject]: 1}}, {upsert: true})
+        console.log("UpdateAttendanceinDB", res);
+        if(res) return 0
+        else    return 1
+    } catch(e) {
+        console.error(e)
+        return -1
+    }
+}
+
+async function getAttendancePercentage(id) {
+    try {
+        let tot = await client.db("telegram-bot").collection("users").findOne({"id": "9617466846", "name": "TotalClasses"})
+        console.log("Total Classes", tot)
+        let res = await client.db("telegram-bot").collection("users").findOne({"id": id.toString()})
+        console.log("getAttendancePercentage", res)
+        let result = new Object()
+        for (const i in res) {
+            if(subjects.includes(i) && Object.hasOwn(res, i) && Object.hasOwn(tot, i)) {
+                if(tot[i] == 0) result[i] = 100
+                else            result[i] = res[i] * 100 / tot[i]
+            }
+        }
+        console.log(result)
+        return result
+    } catch(e) {
+        console.error(e)
+        return -1
+    }
+}
+
 async function errorLog(m) {
     await client.db("telegram-bot").collection("error-logs").insertOne({message: m})
+}
+
+async function checkForUser(id) {
+    id = id.toString()
+    if(await admin.includes(id)) return 0
+    if(await isUserExists(id) == 0) {
+        bot.telegram.sendMessage(id, "Please Login First")
+        return 1
+    }
+    return 0
 }
 
 async function main(){
@@ -144,43 +189,10 @@ app.listen(port,  () => {
 
 /* ************************************ CONNECTION TO DATABASE - END ****************************************** */
 
+/* ************************************ Utility Functions ****************************************** */
 
 
-/* ************************************ TELEGRAM INTERACTION ****************************************** */
-
-// START COMMAND ->
-    // Check if user exists or not
-    // If it does, enter
-    // Else, take the credentials
-
-
-/* ************************************ HANDLING ADMIN ****************************************** */
-
-// async function handleAdminStart(ctx) {
-
-// }
-
-// async function isAdmin(id) {
-//     let res = await client.db("telegram-bot").collection("admins").findOne({id: id.toString()});
-//     console.log(res);
-//     if(res) return 1;
-//     else    return 0;
-// }
-
-/* ************************************ HANDLING ADMIN - END ****************************************** */
-/* ************************************ TELEGRAM INTERACTION ****************************************** */
-/* ************************************ TELEGRAM INTERACTION ****************************************** */
-
-
-async function checkForUser(id) {
-    id = id.toString()
-    if(await admin.includes(id)) return 0
-    if(await isUserExists(id) == 0) {
-        bot.telegram.sendMessage(id, "Please Login First")
-        return 1
-    }
-    return 0
-}
+/* ************************************ TELEGRAM COMMANDS ****************************************** */
 
 
 //method that displays the inline keyboard buttons 
@@ -288,10 +300,10 @@ const requestSubjectName = {
                 text: "Ethical Hacking",
                 one_time_keyboard: true
             }],
-            [{
-                text: "Cloud Computing",
-                one_time_keyboard: true
-            }],
+            // [{
+            //     text: "Cloud Computing",
+            //     one_time_keyboard: true
+            // }],
             [{
                 text: "Mobile Computing",
                 one_time_keyboard: true
@@ -420,7 +432,7 @@ const uploadNotes = new WizardScene (
 const downloadNotes = new WizardScene (
     "downloadNotes",
     async (ctx) => {
-        bot.telegram.sendMessage(ctx.chat.id, 'Choose Subject', requestSubjectName)
+        bot.telegram.sendMessage(ctx.chat.id, 'Subject', requestSubjectName)
         ctx.wizard.next()
     },
     async (ctx) => {
@@ -450,9 +462,47 @@ const downloadNotes = new WizardScene (
     }
 )
 
+const updateAttendance = new WizardScene(
+    "updateAttendance",
+    async (ctx) => {
+        bot.telegram.sendMessage(ctx.chat.id, 'Subject', requestSubjectName)
+        ctx.wizard.next()
+    },
+    async (ctx) => {
+        if(ctx.message.text == "Cancel") return ctx.scene.leave()
+        let res = await UpdateAttendanceinDB(ctx.chat.id, ctx.message.text)
+        if(res == 0) ctx.reply("Updated Successfully")
+        else ctx.reply("Couldn't Update")
+        if(res == -1) {
+            errorLog(`While Updating Attendance\nid: ${ctx.chat.id}\n${ctx.message.text}`)
+        }
+        ctx.scene.leave()
+    }
+)
+
+const attendancePercengate = new WizardScene(
+    "attendancePercengate",
+    async (ctx) => {
+        let result = await getAttendancePercentage(ctx.chat.id)
+        let messageShortage = "", messageA = ""
+        for (const i in result) {
+            console.log(i, result[i])
+            if(result[i] < 75) {
+                messageShortage = messageShortage.concat(`\n${i} : ${result[i]}%`)
+            } else {
+                messageA = messageA.concat(`\n${i} : ${result[i]}%`)
+            }
+        }
+        console.log(messageA, messageShortage)
+        ctx.reply(messageA)
+        ctx.reply("\nShortage:" + messageShortage)
+        ctx.scene.leave()
+    }
+)
+
 /* ********************************************************************* */
 
-const stage = new Stage([startWizard, askforAdminAccess, makeAdmin, uploadNotes, downloadNotes])
+const stage = new Stage([startWizard, askforAdminAccess, makeAdmin, uploadNotes, downloadNotes, updateAttendance, attendancePercengate])
 stage.command('cancel', (ctx) => {
     ctx.reply("Operation canceled")
     return ctx.scene.leave()
@@ -499,6 +549,16 @@ bot.command("command3", async (ctx) => {
 bot.command("command4", async (ctx) => {
     if(await checkForUser(ctx.chat.id)) return
     await ctx.scene.enter("downloadNotes")
+})
+
+bot.command("command5", async (ctx) => {
+    if(await checkForUser(ctx.chat.id)) return
+    await ctx.scene.enter("updateAttendance")
+})
+
+bot.command("command6", async (ctx) => {
+    if(await checkForUser(ctx.chat.id)) return
+    await ctx.scene.enter("attendancePercengate")
 })
 
 
