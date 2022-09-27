@@ -15,6 +15,8 @@ const requestSubjectName = (ctx, message) => {
             one_time_keyboard: true,
             callback_data: 1,
           },
+        ],
+        [
           {
             text: subjects[2],
             one_time_keyboard: true,
@@ -25,6 +27,8 @@ const requestSubjectName = (ctx, message) => {
             one_time_keyboard: true,
             callback_data: 3,
           },
+        ],
+        [
           {
             text: subjects[4],
             one_time_keyboard: true,
@@ -77,6 +81,8 @@ const requestOfferType = (ctx, message) => {
             one_time_keyboard: true,
             callback_data: 1,
           },
+        ],
+        [
           {
             text: offers[2],
             one_time_keyboard: true,

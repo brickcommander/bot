@@ -103,8 +103,8 @@ const startWizard = new WizardScene(
 const askforAdminAccess = new WizardScene(
   "askforAdminAccess",
   async (ctx) => {
-    ctx.wizard.state.name = "noName";
-    ctx.wizard.state.scholarNo = "xxxxxxxxx";
+    ctx.wizard.state.name = String();
+    ctx.wizard.state.scholarNo = String();
     console.log("request admin access", ctx.from);
     await ctx.reply(`Enter Your Name`);
     return ctx.wizard.next();
@@ -117,14 +117,20 @@ const askforAdminAccess = new WizardScene(
   async (ctx) => {
     ctx.wizard.state.scholarNo = ctx.message.text;
     ctx.wizard.state.prevChatId = ctx.chat.id;
-    console.log("Fe");
     await ctx.reply(
-      "Your Request for Admin Access has been registered, and will be resolved soon. Thanks for your interest."
+      "Your Request has been registered,\nand will be resolved ASAP"
     );
     await bot.telegram.sendMessage(
       ADMIN,
-      `Admin Request\nName: ${ctx.wizard.state.name}\nScholar: ${ctx.wizard.state.scholarNo}\nChatId: ${ctx.chat.id}`
+      `Admin Request\nName: ${ctx.wizard.state.name}\nScholar: ${ctx.wizard.state.scholarNo}\nChatId: ` +
+        "*`" +
+        `${ctx.chat.id}` +
+        "`*",
+      {
+        parse_mode: "MarkdownV2",
+      }
     );
+    await bot.telegram.sendMessage(ADMIN);
     return ctx.scene.leave();
   }
 );
@@ -144,7 +150,7 @@ const makeAdmin = new WizardScene(
     InsertAdmin(res);
     await bot.telegram.sendMessage(
       res,
-      `You have been granted Admin Access.\nI'm sure you will make a great use of it.`
+      `You have been granted Admin Access\n:)`
     );
     return ctx.scene.leave();
   }
