@@ -49,97 +49,15 @@ app.listen(port, () => {
   console.log(`Server started on port ${port}`);
 });
 
-/* ************************************ MARKUPS ****************************************** */
+/* ****************** MARKUPS ********************** */
 
-const requestSubjectName = (ctx, message) => {
-  bot.telegram.sendMessage(ctx.chat.id, message, {
-    reply_markup: {
-      inline_keyboard: [
-        [
-          {
-            text: subjects[0],
-            one_time_keyboard: true,
-            callback_data: 0,
-          },
-          {
-            text: subjects[1],
-            one_time_keyboard: true,
-            callback_data: 1,
-          },
-          {
-            text: subjects[2],
-            one_time_keyboard: true,
-            callback_data: 2,
-          },
-          {
-            text: subjects[3],
-            one_time_keyboard: true,
-            callback_data: 3,
-          },
-          {
-            text: subjects[4],
-            one_time_keyboard: true,
-            callback_data: 4,
-          },
-          {
-            text: subjects[5],
-            one_time_keyboard: true,
-            callback_data: 5,
-          },
-        ],
-      ],
-    },
-  });
-};
+const {
+  requestSubjectName,
+  requestYesNo,
+  requestOfferType,
+} = require("./Markup/Markup");
 
-const requestYesNo = (ctx, message) => {
-  bot.telegram.sendMessage(ctx.chat.id, message, {
-    reply_markup: {
-      inline_keyboard: [
-        [
-          {
-            text: "Yes",
-            one_time_keyboard: true,
-            callback_data: 1,
-          },
-          {
-            text: "No",
-            one_time_keyboard: true,
-            callback_data: 0,
-          },
-        ],
-      ],
-    },
-  });
-};
-
-const requestOfferType = (ctx, message) => {
-  bot.telegram.sendMessage(ctx.chat.id, message, {
-    reply_markup: {
-      inline_keyboard: [
-        [
-          {
-            text: offers[0],
-            one_time_keyboard: true,
-            callback_data: 0,
-          },
-          {
-            text: offers[1],
-            one_time_keyboard: true,
-            callback_data: 1,
-          },
-          {
-            text: offers[2],
-            one_time_keyboard: true,
-            callback_data: 2,
-          },
-        ],
-      ],
-    },
-  });
-};
-
-/* ************************************ TELEGRAM INTERACTION - END ****************************************** */
+/* ************** TELEGRAM INTERACTION - END **************** */
 
 //method to start get the script to pulling updates for telegram
 
