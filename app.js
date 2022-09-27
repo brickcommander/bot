@@ -41,6 +41,7 @@ const {
   errorLog,
   checkForUser,
   main,
+  getAllUsers,
 } = require("./Database/conn");
 
 main().catch(console.error);
@@ -55,6 +56,7 @@ const {
   requestSubjectName,
   requestYesNo,
   requestOfferType,
+  requestDocument,
 } = require("./Markup/Markup");
 
 /* ************** TELEGRAM INTERACTION - END **************** */
@@ -375,6 +377,76 @@ const findAllPlacementRecordWithFilter = new WizardScene(
   }
 );
 
+const push_notification = new WizardScene(
+  "push_notification",
+  async (ctx) => {
+    ctx.reply("Enter Message");
+    return ctx.wizard.next();
+  },
+  async (ctx) => {
+    ctx.wizard.state.message = ctx.message.text;
+    requestDocument(ctx, "Enter Document ?");
+    return ctx.wizard.next();
+  },
+  async (ctx) => {
+    ctx.deleteMessage();
+    let res = ctx.update.callback_query.data;
+    if (res == 0) {
+      res = await getAllUsers();
+      res.forEach(async (x) => {
+        try {
+          await ctx.telegram.sendMessage(x.id, ctx.wizard.state.message);
+        } catch (e) {
+          console.log(e);
+        }
+      });
+      return ctx.scene.leave();
+    }
+    ctx.wizard.state.docType = res;
+    ctx.reply(`Upload ${res}`);
+    return ctx.wizard.next();
+  },
+  async (ctx) => {
+    console.log(ctx.message);
+    let documentId = String();
+    let docType = ctx.wizard.state.docType;
+    try {
+      if (docType == "PDF") {
+        documentId = ctx.message.document.file_id;
+      } else {
+        let parray = ctx.message.photo;
+        documentId = parray[parray.length - 1].file_id;
+        console.log(documentId);
+      }
+    } catch (e) {
+      ctx.reply("Wrong Type of Document\nOperation Cancelled");
+      console.log(
+        "\n\n\nError - push_notification Wrong Type of Docuemnt Upload\n\n\n",
+        e
+      );
+      return ctx.scene.leave();
+    }
+    let users = await getAllUsers();
+    users.forEach(async (user) => {
+      try {
+        if (user.id != ctx.chat.id) {
+          await ctx.telegram.sendMessage(user.id, ctx.wizard.state.message);
+          if (docType == "PDF") {
+            await ctx.telegram.sendDocument(user.id, documentId);
+          } else {
+            await ctx.telegram.sendPhoto(user.id, documentId);
+          }
+        }
+      } catch (e) {
+        console.log(
+          "Error in push_notifications:\n\t1. id field not exists in user object\n\t2. ChatId: user.id might not exists\n\t3. Error while sending document"
+        );
+      }
+    });
+    return ctx.scene.leave();
+  }
+);
+
 /* ********************************************************************* */
 
 const stage = new Stage([
@@ -387,11 +459,14 @@ const stage = new Stage([
   attendancePercengate,
   updatePlacementData,
   findAllPlacementRecordWithFilter,
+  push_notification,
 ]);
+
 stage.command("cancel", (ctx) => {
-  ctx.reply("Operation canceled");
+  ctx.reply("Operation cancelled");
   return ctx.scene.leave();
 });
+
 bot.use(stage.middleware());
 
 /* ************************     BOT - commands      ********************** */
@@ -456,6 +531,15 @@ bot.command("update_placement_data", async (ctx) => {
 bot.command("find_placement_records", async (ctx) => {
   if (await checkForUser(ctx.chat.id)) return;
   await ctx.scene.enter("findAllPlacementRecordWithFilter");
+});
+
+bot.command("push_notification", async (ctx) => {
+  if (await checkForUser(ctx.chat.id)) return;
+  if (admin.includes(ctx.chat.id.toString())) {
+    await ctx.scene.enter("push_notification");
+  } else {
+    await ctx.reply("You Don't have this privilege.\nHave a good day.");
+  }
 });
 
 bot.launch();

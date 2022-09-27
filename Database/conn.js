@@ -71,6 +71,21 @@ async function getUser(id) {
   }
 }
 
+async function getAllUsers() {
+  try {
+    let res = await client
+      .db("telegram-bot")
+      .collection("users")
+      .find({})
+      .project({ id: 1, _id: 0 });
+    res = await res.toArray();
+    // console.log("GetUser", res);
+    return res;
+  } catch (e) {
+    console.error(e);
+  }
+}
+
 async function deleteUser(id) {
   try {
     let res = await client
@@ -282,4 +297,5 @@ module.exports = {
   errorLog,
   checkForUser,
   main,
+  getAllUsers,
 };

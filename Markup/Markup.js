@@ -88,4 +88,35 @@ const requestOfferType = (ctx, message) => {
   });
 };
 
-module.exports = { requestSubjectName, requestYesNo, requestOfferType };
+const requestDocument = (ctx, message) => {
+  ctx.replyWithMarkdown(message, {
+    reply_markup: {
+      inline_keyboard: [
+        [
+          {
+            text: "No",
+            one_time_keyboard: true,
+            callback_data: 0,
+          },
+          {
+            text: "PDF",
+            one_time_keyboard: true,
+            callback_data: "PDF", // PDF
+          },
+          {
+            text: "Image",
+            one_time_keyboard: true,
+            callback_data: "Image", // Image
+          },
+        ],
+      ],
+    },
+  });
+};
+
+module.exports = {
+  requestSubjectName,
+  requestYesNo,
+  requestOfferType,
+  requestDocument,
+};
