@@ -50,6 +50,20 @@ app.listen(port, () => {
   console.log(`Server started on port ${port}`);
 });
 
+/* ********** DATA RULE CHECK *********** */
+function isValidRollNumber(roll) {
+  let rollNo = parseInt(roll);
+  if (
+    (191112001 <= rollNo && rollNo <= 191112080) ||
+    (191112201 <= rollNo && rollNo <= 191112280) ||
+    (191112401 <= rollNo && rollNo <= 191112480)
+  ) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 /* ****************** MARKUPS ********************** */
 
 const {
@@ -94,6 +108,10 @@ const startWizard = new WizardScene(
     }
   },
   async (ctx) => {
+    if (isValidRollNumber(ctx.message.text) == false) {
+      await ctx.reply("Scholar Number Not Valid. Operation Cancelled");
+      return ctx.scene.leave();
+    }
     await InsertUser(ctx.chat.id, ctx.chat.first_name, ctx.message.text, 2);
     await ctx.reply(`Logged-In`);
     return ctx.scene.leave();
@@ -116,6 +134,10 @@ const askforAdminAccess = new WizardScene(
   },
   async (ctx) => {
     ctx.wizard.state.scholarNo = ctx.message.text;
+    if (isValidRollNumber(ctx.wizard.state.scholarNo) == false) {
+      await ctx.reply("Scholar Number Not Valid. Operation Cancelled");
+      return ctx.scene.leave();
+    }
     ctx.wizard.state.prevChatId = ctx.chat.id;
     await ctx.reply(
       "Your Request has been registered,\nand will be resolved ASAP"
