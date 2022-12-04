@@ -15,6 +15,24 @@ const ADMIN = process.env.ADMIN; // ADMIN
 
 bot.use(session());
 
+/********************* LOG FILE *******************/
+
+var fs = require("fs");
+
+// append data to log file
+function updateLogFile(data) {
+  console.log(Date.now());
+  fs.appendFile(
+    "logs.txt",
+    Date.now() + " : " + JSON.stringify(data) + "\n",
+    "utf8",
+    function (err) {
+      if (err) throw err;
+      console.log("Data is appended to file successfully.");
+    }
+  );
+}
+
 /* **************************** DATABASE **************************** */
 
 const express = require("express");
@@ -501,6 +519,7 @@ bot.use(stage.middleware());
 
 bot.start(async (ctx) => {
   console.log("start-command");
+  updateLogFile(ctx.chat);
   await ctx.scene.enter("start");
 });
 
